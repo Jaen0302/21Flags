@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>21 Flags — Take 1–3, Last Wins</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    :root {
+      --bg1: #0f172a;
+      --bg2: #111827;
+      --card: #1f2937;
+      --accent: #60a5fa;
+      --accent-2: #a78bfa;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --danger: #f87171;
+      --ok: #34d399;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      height: 100%;
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      color: var(--text);
+      background: radial-gradient(1200px 800px at 20% -10%, #1e293b 0%, var(--bg1) 40%, var(--bg2) 100%);
+    }
+    .wrap {
+      max-width: 860px;
+      margin: 5vh auto;
+      padding: 24px;
+    }
+    .card {
+      background: linear-gradient(180deg, rgba(31,41,55,.9), rgba(17,24,39,.85));
+      border: 1px solid rgba(148,163,184,.18);
+      border-radius: 16px;
+      box-shadow: 0 20px 50px rgba(0,0,0,.35);
+      padding: 24px;
+    }
+    h1 {
+      margin: 0 0 6px;
+      font-size: clamp(22px, 3.2vw, 30px);
+      letter-spacing: .2px;
+    }
+    .sub {
+      margin: 0 0 16px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .board {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(36px, 1fr));
+      gap: 8px;
+      padding: 18px;
+      background: rgba(2,6,23,.35);
+      border: 1px solid rgba(148,163,184,.12);
+      border-radius: 12px;
+      min-height: 120px;
+      transition: all .2s ease;
+    }
+    .flag {
+      font-size: 28px;
+      line-height: 1;
+      display: grid;
+      place-items: center;
+      width: 36px;
+      height: 36px;
+      background: rgba(30,41,59,.8);
+      border: 1px solid rgba(148,163,184,.15);
+      border-radius: 10px;
+      user-select: none;
+      transition: transform .08s ease;
+    }
+    .flag.pop { transform: scale(1.12); }
+    .counters {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      justify-content: space-between;
+      margin: 14px 0 12px;
+      flex-wrap: wrap;
+    }
+    .pill {
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 13px;
+      border: 1px solid rgba(148,163,184,.18);
+      background: rgba(2,6,23,.35);
+      color: var(--muted);
+    }
+    .danger { color: var(--danger); }
+    .ok { color: var(--ok); }
+    .controls {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin-top: 8px;
+      flex-wrap: wrap;
+    }
+    input[type="number"] {
+      width: 110px;
+      padding: 10px 12px;
+      font-size: 16px;
+      color: var(--text);
+      background: rgba(2,6,23,.55);
+      border: 1px solid rgba(148,163,184,.25);
+      border-radius: 10px;
+      outline: none;
+    }
+    input[type="number"]:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 4px rgba(96,165,250,.15);
+    }
+    button {
+      padding: 10px 14px;
+      font-size: 16px;
+      border-radius: 10px;
+      border: 1px solid transparent;
+      cursor: pointer;
+      color: #0b1220;
+      background: linear-gradient(180deg, var(--accent), #3b82f6);
+      transition: transform .06s ease, filter .2s ease, opacity .2s ease;
+    }
+    button.secondary {
+      color: var(--text);
+      background: linear-gradient(180deg, #4f46e5, var(--accent-2));
+    }
+    button:disabled { opacity: .6; cursor: not-allowed; }
+    button:hover { filter: brightness(1.05); }
+    button:active { transform: translateY(1px); }
+    .log {
+      margin-top: 12px;
+      padding: 12px 14px;
+      background: rgba(2,6,23,.35);
+      border: 1px solid rgba(148,163,184,.15);
+      border-radius: 10px;
+      min-height: 48px;
+      font-size: 14px;
+      color: var(--text);
+    }
+    .tips {
+      margin-top: 10px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .hint {
+      font-weight: 600;
+      color: #c7d2fe;
+    }
+    .footer {
+      margin-top: 16px; font-size: 12px; color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>21 Flags</h1>
+      <p class="sub">Take <strong>1–3</strong> flags on your turn. Whoever takes the <strong>last flag</strong> wins.</p>
+
+      <div class="counters">
+        <div class="pill">Remaining: <span id="remain">21</span></div>
+        <div class="pill">Your last move: <span id="youLast">–</span></div>
+        <div class="pill">Computer last: <span id="aiLast">–</span></div>
+        <div class="pill">Target losing states: <span class="hint">4, 8, 12, 16, 20</span></div>
+      </div>
+
+      <div id="board" class="board" aria-live="polite" aria-label="Flag board"></div>
+
+      <div class="controls">
+        <label for="take" class="pill">You take</label>
+        <input id="take" type="number" min="1" max="3" value="1" />
+        <button id="btnTake">Take</button>
+        <button id="btnNew" class="secondary">New Game</button>
+      </div>
+
+      <div id="log" class="log">Your move! Enter 1, 2, or 3.</div>
+      <div class="tips">Computer uses backward reasoning to try to leave <em>0 or a multiple of 4</em> after its turn. If it’s already on a multiple of 4 and can’t reach the next target (e.g., at 20), it will take <strong>1</strong>.</div>
+      <div class="footer">Pro tip: multiples of 4 are losing positions if your opponent plays optimally.</div>
+    </div>
+  </div>
+
+  <script>
+    // --- Game State ---
+    const TOTAL_START = 21;
+    let remaining = TOTAL_START;
+    let gameOver = false;
+
+    // --- DOM ---
+    const boardEl = document.getElementById('board');
+    const remainEl = document.getElementById('remain');
+    const youLastEl = document.getElementById('youLast');
+    const aiLastEl = document.getElementById('aiLast');
+    const logEl = document.getElementById('log');
+    const inputEl = document.getElementById('take');
+    const btnTake = document.getElementById('btnTake');
+    const btnNew = document.getElementById('btnNew');
+
+    // Render flags as emoji tiles
+    function renderFlags() {
+      boardEl.innerHTML = '';
+      for (let i = 0; i < remaining; i++) {
+        const div = document.createElement('div');
+        div.className = 'flag';
+        div.textContent = '🚩';
+        boardEl.appendChild(div);
+      }
+      remainEl.textContent = remaining;
+    }
+
+    function popTiles(n) {
+      const nodes = Array.from(boardEl.children).slice(-n);
+      nodes.forEach((node, i) => {
+        setTimeout(() => node.classList.add('pop'), i * 40);
+        setTimeout(() => node.remove(), 160 + i * 40);
+      });
+    }
+
+    function endGame(winner) {
+      gameOver = true;
+      inputEl.disabled = true;
+      btnTake.disabled = true;
+      const msg = winner === 'you'
+        ? '🎉 You took the last flag. You win!'
+        : '🤖 Computer took the last flag. Computer wins!';
+      logEl.innerHTML = msg;
+    }
+
+    function playerMove() {
+      if (gameOver) return;
+      const v = Number(inputEl.value);
+      if (!Number.isInteger(v) || v < 1 || v > 3) {
+        logEl.innerHTML = '<span class="danger">Enter a whole number 1–3.</span>';
+        return;
+      }
+      if (v > remaining) {
+        logEl.innerHTML = `<span class="danger">Only ${remaining} flag(s) left.</span>`;
+        return;
+      }
+
+      // Apply player's move
+      youLastEl.textContent = v;
+      remaining -= v;
+      popTiles(v);
+      remainEl.textContent = remaining;
+
+      if (remaining === 0) return endGame('you');
+
+      // Computer's turn with a small delay
+      inputEl.disabled = true;
+      btnTake.disabled = true;
+      logEl.textContent = 'Computer is thinking...';
+      setTimeout(computerMove, 650);
+    }
+
+    // Computer strategy:
+    // Aim to leave 0 or a multiple of 4 after its turn.
+    // If remaining % 4 === 0 (e.g., 20) and can't jump to the next target within 1–3,
+    // take 1 as per your instruction.
+    function computerMove() {
+      if (gameOver) return;
+
+      let take = 1;
+      const r = remaining % 4;
+
+      if (r === 0) {
+        // Already at a multiple of 4 (losing state if it's your turn).
+        // Per your rule (like at 20), take 1.
+        take = Math.min(1, remaining);
+      } else {
+        // Take r (1..3) to make it a multiple of 4
+        take = Math.min(r, remaining);
+      }
+
+      // Safety: ensure 1–3 and not exceeding remaining
+      take = Math.max(1, Math.min(3, take));
+
+      aiLastEl.textContent = take;
+      remaining -= take;
+      popTiles(take);
+      remainEl.textContent = remaining;
+
+      if (remaining === 0) return endGame('ai');
+
+      // Back to player
+      inputEl.disabled = false;
+      btnTake.disabled = false;
+      inputEl.focus();
+      inputEl.select();
+      const targets = [0,4,8,12,16,20];
+      const note = targets.includes(remaining)
+        ? ' (you are on a losing state if I play optimally)'
+        : '';
+      logEl.innerHTML = `Your turn. <span class="ok">Remaining: ${remaining}</span>${note}`;
+    }
+
+    function newGame() {
+      remaining = TOTAL_START;
+      gameOver = false;
+      inputEl.disabled = false;
+      btnTake.disabled = false;
+      inputEl.value = 1;
+      youLastEl.textContent = '–';
+      aiLastEl.textContent = '–';
+      logEl.textContent = 'Your move! Enter 1, 2, or 3.';
+      renderFlags();
+      inputEl.focus();
+      inputEl.select();
+    }
+
+    // Events
+    btnTake.addEventListener('click', playerMove);
+    btnNew.addEventListener('click', newGame);
+    inputEl.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') playerMove();
+    });
+
+    // Boot
+    renderFlags();
+    inputEl.focus();
+  </script>
+</body>
+</html>
