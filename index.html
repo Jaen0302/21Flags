@@ -183,7 +183,7 @@
     const btnTake = document.getElementById('btnTake');
     const btnNew = document.getElementById('btnNew');
 
-    // Render flags
+    // Render flags as emoji tiles
     function renderFlags() {
       boardEl.innerHTML = '';
       for (let i = 0; i < remaining; i++) {
@@ -238,36 +238,32 @@
       setTimeout(computerMove, 650);
     }
 
-    // Weighted plan: 60% multiples-of-4, 20% target 18, 20% target 10.
-    // If the plan can't be executed in 1–3, it may fallback or make a random valid move.
+    // AI chooser per your rules:
+    // 1) 70% chance: try to reach 18, then 10 (in that order) if reachable in 1–3.
+    // 2) Else (or if not reachable): try to reach a multiple of 4 by removing r % 4.
+    // 3) If neither plan is achievable this turn: random valid move.
     function chooseComputerTake(r) {
       const maxTake = Math.min(3, r);
-      const rand = Math.random();
-      let target = null;
 
-      if (rand < 0.6) {
-        // Aim to leave a multiple of 4 (including 0)
-        const remainder = r % 4;
-        if (remainder !== 0) return Math.min(remainder, maxTake);
-        // Already multiple of 4: intentionally imperfect—random 1..max
-        return Math.floor(Math.random() * maxTake) + 1;
-      } else if (rand < 0.8) {
-        target = 18;
-      } else {
-        target = 10;
+      // Step 1: 70% chance to prioritize 18 then 10
+      if (Math.random() < 0.7) {
+        const targets = [18, 10];
+        for (const t of targets) {
+          if (r > t) {
+            const need = r - t;
+            if (need >= 1 && need <= maxTake) return need;
+          }
+        }
+        // If neither 18 nor 10 reachable in one move, fall through to step 2
       }
 
-      // Try to reach target if feasible in one move
-      if (target !== null && r > target) {
-        const need = r - target;
-        if (need >= 1 && need <= 3) return Math.min(need, maxTake);
+      // Step 2: aim for a multiple of 4
+      const remainder = r % 4;
+      if (remainder !== 0 && remainder <= maxTake) {
+        return remainder;
       }
 
-      // Otherwise: small chance to still play optimally, else random valid move
-      if (Math.random() < 0.5) {
-        const remainder = r % 4;
-        if (remainder !== 0) return Math.min(remainder, maxTake);
-      }
+      // Step 3: random valid move (1..maxTake)
       return Math.floor(Math.random() * maxTake) + 1;
     }
 
@@ -306,12 +302,14 @@
       inputEl.select();
     }
 
+    // Events
     btnTake.addEventListener('click', playerMove);
     btnNew.addEventListener('click', newGame);
     inputEl.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') playerMove();
     });
 
+    // Boot
     renderFlags();
     inputEl.focus();
   </script>
