@@ -137,31 +137,21 @@
       font-size: 14px;
       color: var(--text);
     }
-    .tips {
-      margin-top: 10px;
-      font-size: 13px;
-      color: var(--muted);
-    }
-    .hint {
-      font-weight: 600;
-      color: #c7d2fe;
-    }
-    .footer {
-      margin-top: 16px; font-size: 12px; color: var(--muted);
-    }
   </style>
 </head>
 <body>
   <div class="wrap">
     <div class="card">
       <h1>21 Flags</h1>
-      <p class="sub">Take <strong>1–3</strong> flags on your turn. Whoever takes the <strong>last flag</strong> wins.</p>
+      <p class="sub">
+        Take <strong>1–3</strong> flags on your turn. You <strong>cannot take 0</strong> flags or <strong>more than 3</strong> flags.
+        Whoever takes the <strong>last flag</strong> wins.
+      </p>
 
       <div class="counters">
         <div class="pill">Remaining: <span id="remain">21</span></div>
         <div class="pill">Your last move: <span id="youLast">–</span></div>
         <div class="pill">Computer last: <span id="aiLast">–</span></div>
-        <div class="pill">Target losing states: <span class="hint">4, 8, 12, 16, 20</span></div>
       </div>
 
       <div id="board" class="board" aria-live="polite" aria-label="Flag board"></div>
@@ -174,8 +164,6 @@
       </div>
 
       <div id="log" class="log">Your move! Enter 1, 2, or 3.</div>
-      <div class="tips">Computer uses backward reasoning to try to leave <em>0 or a multiple of 4</em> after its turn. If it’s already on a multiple of 4 and can’t reach the next target (e.g., at 20), it will take <strong>1</strong>.</div>
-      <div class="footer">Pro tip: multiples of 4 are losing positions if your opponent plays optimally.</div>
     </div>
   </div>
 
@@ -252,10 +240,8 @@
       setTimeout(computerMove, 650);
     }
 
-    // Computer strategy:
-    // Aim to leave 0 or a multiple of 4 after its turn.
-    // If remaining % 4 === 0 (e.g., 20) and can't jump to the next target within 1–3,
-    // take 1 as per your instruction.
+    // Computer strategy: aim to leave 0 or a multiple of 4 after its turn.
+    // Implementation keeps the UI the same and gives no strategic hints to the player.
     function computerMove() {
       if (gameOver) return;
 
@@ -263,15 +249,10 @@
       const r = remaining % 4;
 
       if (r === 0) {
-        // Already at a multiple of 4 (losing state if it's your turn).
-        // Per your rule (like at 20), take 1.
         take = Math.min(1, remaining);
       } else {
-        // Take r (1..3) to make it a multiple of 4
         take = Math.min(r, remaining);
       }
-
-      // Safety: ensure 1–3 and not exceeding remaining
       take = Math.max(1, Math.min(3, take));
 
       aiLastEl.textContent = take;
@@ -281,16 +262,11 @@
 
       if (remaining === 0) return endGame('ai');
 
-      // Back to player
       inputEl.disabled = false;
       btnTake.disabled = false;
       inputEl.focus();
       inputEl.select();
-      const targets = [0,4,8,12,16,20];
-      const note = targets.includes(remaining)
-        ? ' (you are on a losing state if I play optimally)'
-        : '';
-      logEl.innerHTML = `Your turn. <span class="ok">Remaining: ${remaining}</span>${note}`;
+      logEl.textContent = `Your turn. Remaining: ${remaining}`;
     }
 
     function newGame() {
