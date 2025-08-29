@@ -149,7 +149,7 @@
       </p>
 
       <div class="counters">
-        <div class="pill">Remaining: <span id="remain">21</span></div>
+        <!-- Removed the Remaining pill -->
         <div class="pill">Your last move: <span id="youLast">–</span></div>
         <div class="pill">Computer last: <span id="aiLast">–</span></div>
       </div>
@@ -175,7 +175,6 @@
 
     // --- DOM ---
     const boardEl = document.getElementById('board');
-    const remainEl = document.getElementById('remain');
     const youLastEl = document.getElementById('youLast');
     const aiLastEl = document.getElementById('aiLast');
     const logEl = document.getElementById('log');
@@ -192,7 +191,6 @@
         div.textContent = '🚩';
         boardEl.appendChild(div);
       }
-      remainEl.textContent = remaining;
     }
 
     function popTiles(n) {
@@ -225,14 +223,13 @@
         return;
       }
       if (v > remaining) {
-        logEl.innerHTML = `<span class="danger">Only ${remaining} flag(s) left.</span>`;
+        logEl.innerHTML = `<span class="danger">Not enough flags left.</span>`;
         return;
       }
 
       youLastEl.textContent = v;
       remaining -= v;
       popTiles(v);
-      remainEl.textContent = remaining;
 
       if (remaining === 0) {
         return endGame('you'); // end only when last flag taken
@@ -287,7 +284,6 @@
       aiLastEl.textContent = String(take);
       remaining -= take;
       popTiles(take);
-      remainEl.textContent = remaining;
 
       if (remaining === 0) {
         return endGame('ai'); // end only when last flag taken
@@ -298,7 +294,7 @@
       btnTake.disabled = false;
       inputEl.focus();
       inputEl.select();
-      logEl.textContent = `Your turn. Remaining: ${remaining}`;
+      logEl.textContent = 'Your turn.';
     }
 
     function newGame() {
